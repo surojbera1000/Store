@@ -49,6 +49,62 @@ python bot.py
 
 Requires Python 3.10+.
 
+## 🖥 Run 24/7 on a VPS (e.g. via Termius)
+
+Tested commands for Ubuntu 22.04 / 24.04. Connect to the server over SSH (Termius → New Host → IP, username, password), then:
+
+```bash
+# 1. Install tools
+sudo apt update && sudo apt install -y python3 python3-venv python3-pip git
+
+# 2. Download the bot
+git clone https://github.com/surojbera1000/Store.git
+cd Store
+
+# 3. Install dependencies
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+
+# 4. Configure (Ctrl+O, Enter to save, Ctrl+X to exit)
+cp .env.example .env
+nano .env
+
+# 5. Test run (stop with Ctrl+C)
+.venv/bin/python bot.py
+```
+
+Install it as a service so it keeps running after you close Termius and restarts on crash or reboot:
+
+```bash
+sudo tee /etc/systemd/system/store-bot.service > /dev/null <<EOF
+[Unit]
+Description=Telegram Store Bot
+After=network-online.target
+
+[Service]
+WorkingDirectory=$(pwd)
+ExecStart=$(pwd)/.venv/bin/python bot.py
+Restart=always
+RestartSec=5
+User=$(whoami)
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl enable --now store-bot
+```
+
+Useful commands:
+
+| Task | Command |
+|------|---------|
+| Status | `sudo systemctl status store-bot` |
+| Live logs | `sudo journalctl -u store-bot -f` |
+| Restart (after editing `.env`) | `sudo systemctl restart store-bot` |
+| Update to latest code | `git pull && .venv/bin/pip install -r requirements.txt && sudo systemctl restart store-bot` |
+
 ## 📦 Adding stock
 
 Admin Panel → 🌍 Countries & Stock → ➕ Add Country:
